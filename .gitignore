@@ -1,3 +1,15 @@
 .DS_Store
+Thumbs.db
 node_modules/
 *.log
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+dist/
+build/
+coverage/
+.next/
+.vercel/
+.netlify/
