@@ -8,11 +8,34 @@
         /* Reset default styles and set up CSS custom properties for theming */
         :root {
             --primary-color: #2196f3;
+            --primary-color-dark: #1565c0;
             --background-color: #f5f5f5;
+            --panel-background: #ffffff;
             --card-back: #1976d2;
             --card-front: #ffffff;
             --text-color: #333333;
+            --muted-text: #666666;
             --success-color: #4caf50;
+            --modal-overlay: rgba(0, 0, 0, 0.5);
+            --shadow: rgba(0, 0, 0, 0.1);
+            --button-text: #ffffff;
+            --panel-border: rgba(0, 0, 0, 0.05);
+        }
+
+        body[data-theme="dark"] {
+            --primary-color: #64b5f6;
+            --primary-color-dark: #42a5f5;
+            --background-color: #12181b;
+            --panel-background: #1b2228;
+            --card-back: #2f5aa5;
+            --card-front: #1f2932;
+            --text-color: #e8eef5;
+            --muted-text: #b5c2cf;
+            --success-color: #7ee787;
+            --modal-overlay: rgba(0, 0, 0, 0.75);
+            --shadow: rgba(0, 0, 0, 0.45);
+            --button-text: #e8eef5;
+            --panel-border: rgba(255, 255, 255, 0.08);
         }
 
         * {
@@ -29,6 +52,7 @@
             line-height: 1.6;
             padding: 20px;
             min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* Main container with max-width for larger screens */
@@ -54,11 +78,12 @@
             justify-content: space-around;
             flex-wrap: wrap;
             gap: 1rem;
-            background: white;
+            background: var(--panel-background);
             padding: 1rem;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px var(--shadow);
             margin-bottom: 2rem;
+            border: 1px solid var(--panel-border);
         }
 
         .stat {
@@ -74,6 +99,10 @@
         .grid-selector {
             text-align: center;
             margin-bottom: 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
         button {
@@ -81,18 +110,27 @@
             border: none;
             border-radius: 4px;
             background: var(--primary-color);
-            color: white;
+            color: var(--button-text);
             cursor: pointer;
             font-size: 1rem;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
         button:hover {
-            background-color: #1565c0;
+            background-color: var(--primary-color-dark);
+        }
+
+        button:focus-visible {
+            outline: 3px solid var(--success-color);
+            outline-offset: 2px;
         }
 
         button.active {
-            background-color: #0d47a1;
+            background-color: var(--primary-color-dark);
+        }
+
+        .theme-toggle {
+            min-width: 150px;
         }
 
         /* Game grid styles with responsive layout */
@@ -152,6 +190,7 @@
         .card-front {
             background: var(--card-front);
             transform: rotateY(180deg);
+            color: var(--text-color);
         }
 
         .card-back {
@@ -167,18 +206,21 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: var(--modal-overlay);
             justify-content: center;
             align-items: center;
         }
 
         .modal-content {
-            background: white;
+            background: var(--panel-background);
+            color: var(--text-color);
             padding: 2rem;
             border-radius: 8px;
             text-align: center;
             max-width: 400px;
             width: 90%;
+            box-shadow: 0 10px 25px var(--shadow);
+            border: 1px solid var(--panel-border);
         }
 
         /* Best scores section */
@@ -190,9 +232,11 @@
         .scores-list {
             max-width: 600px;
             margin: 1rem auto;
-            background: white;
+            background: var(--panel-background);
             padding: 1rem;
             border-radius: 8px;
+            color: var(--text-color);
+            border: 1px solid var(--panel-border);
         }
 
         /* Responsive design adjustments */
@@ -240,6 +284,7 @@
         <div class="grid-selector">
             <button class="grid-btn active" data-size="4">4x4 Grid</button>
             <button class="grid-btn" data-size="6">6x6 Grid</button>
+            <button class="theme-toggle" type="button" aria-label="Toggle dark mode">Dark Mode</button>
         </div>
 
         <!-- Game grid -->
@@ -286,7 +331,8 @@
             modal: document.querySelector('.modal'),
             finalStats: document.querySelector('.final-stats'),
             gridButtons: document.querySelectorAll('.grid-btn'),
-            scoresList: document.querySelector('.scores-list')
+            scoresList: document.querySelector('.scores-list'),
+            themeToggle: document.querySelector('.theme-toggle')
         };
 
         // Card symbols (emojis) for both grid sizes
@@ -295,6 +341,20 @@
             '6x6': ['🎨', '🎭', '🎪', '🎫', '🎯', '🎲', '🎮', '🎰', '🎱', '🎳', 
                    '🎸', '🎺', '🎻', '🎹', '🎷', '🥁', '🎼', '🎵']
         };
+
+        // Theme management
+        function applyTheme(theme) {
+            const selectedTheme = theme === 'dark' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', selectedTheme);
+            localStorage.setItem('memoryGameTheme', selectedTheme);
+            elements.themeToggle.textContent = selectedTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+            elements.themeToggle.setAttribute('aria-label', selectedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('memoryGameTheme');
+            applyTheme(savedTheme || 'light');
+        }
 
         // Shuffle array using Fisher-Yates algorithm
         function shuffle(array) {
@@ -498,8 +558,14 @@
             });
         });
 
+        elements.themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+
         // Initialize game
         updateScoresList();
+        initializeTheme();
         initializeGrid();
     </script>
 </body>
